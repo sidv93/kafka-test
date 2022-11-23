@@ -1,0 +1,32 @@
+version: '3.7'
+
+networks:
+  kafka:
+      name: kafka_network
+      driver: bridge 
+
+services:
+  consumer:
+    build:
+      context: ./consumer
+      dockerfile: ./Dockerfile
+    image: consumer
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    networks: 
+      - kafka
+
+  ui:
+    container_name: dashboard-ui
+    image: postgres
+    build:
+      context: ./ui
+      dockerfile: ./Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    networks: 
+      - kafka
