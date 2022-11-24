@@ -6,17 +6,17 @@ networks:
       driver: bridge 
 
 services:
-  # consumer:
-  #   build:
-  #     context: ./consumer
-  #     dockerfile: ./Dockerfile
-  #   image: consumer
-  #   env_file:
-  #     - .env
-  #   ports:
-  #     - "8080:8080"
-  #   networks: 
-  #     - kafka
+  consumer:
+    build:
+      context: ./consumer
+      # dockerfile: ./consumer/Dockerfile
+    container_name: consumer
+    # env_file:
+    #   - .env
+    ports:
+      - "8080:8081"
+    networks: 
+      - kafka
 
   # ui:
   #   container_name: dashboard-ui
