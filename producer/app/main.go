@@ -16,15 +16,10 @@ const (
 	brokerAddress = "broker:29092"
 )
 
-// var kafkaWriter kafka.Writer
-
-// func createKafkaWriter() {
 var kafkaWriter = kafka.NewWriter(kafka.WriterConfig{
 	Brokers: []string{brokerAddress},
 	Topic:   topic,
 })
-
-// }
 
 func check(c *gin.Context) {
 	c.JSON(200, gin.H{"status": "healthy"})
