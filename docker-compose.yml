@@ -9,12 +9,33 @@ services:
   consumer:
     build:
       context: ./consumer
-      # dockerfile: ./consumer/Dockerfile
     container_name: consumer
     # env_file:
     #   - .env
     ports:
       - "8080:8081"
+    networks: 
+      - kafka
+
+  producer:
+    build:
+      context: ./producer
+    container_name: producer
+    # env_file:
+    #   - .env
+    ports:
+      - "6000:5000"
+    networks: 
+      - kafka
+
+  systemstats:
+    build:
+      context: ./system-stats
+    container_name: systemstats
+    env_file:
+      - .env
+    ports:
+      - "5000:8081"
     networks: 
       - kafka
 
@@ -31,53 +52,79 @@ services:
   #   networks: 
   #     - kafka
 
-  kafka1:
-    image: confluentinc/cp-kafka:7.2.1
-    container_name: kafka1
+  broker:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: broker
+    hostname: broker
     environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_LISTENERS: PLAINTEXT://kafka1:9092,CONTROLLER://kafka1:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9092
-      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
-      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:9093,2@kafka2:9093,3@kafka3:9093'
+      # KAFKA_NODE_ID: 1
+      # KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SID:PLAINTEXT,RAM:PLAINTEXT
+      # KAFKA_LISTENERS: SID://localhost:9092,RAM://kafka1:29092
+      # KAFKA_ADVERTISED_LISTENERS: SID://localhost:9092,RAM://kafka1:29092
+      # KAFKA_CONTROLLER_LISTENER_NAMES: 'RAM'
+      # # KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:9093,2@kafka2:9093,3@kafka3:9093'
+      # KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:29093'
+      # KAFKA_PROCESS_ROLES: 'broker,controller'
+      # KAFKA_INTER_BROKER_LISTENER_NAME: RAM
+
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
       KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@broker:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
     volumes:
       - ./run_workaround.sh:/tmp/run_workaround.sh
+    ports:
+      - "9092:9092"
+      - "9101:9101"
     command: >
       bash -c "chmod +x /tmp/run_workaround.sh &&
                /tmp/run_workaround.sh && /etc/confluent/docker/run"
     
+    networks: 
+      - kafka
+    
     # "chmod +x /tmp/run_workaround.sh &&  bash -c 'if [ ! -f /tmp/run_workaround.sh ]; then echo \"ERROR: Did you forget the run_workaround.sh file that came with this docker-compose.yml file?\" && exit 1 ; else /tmp/run_workaround.sh && /etc/confluent/docker/run ; fi'"
-  kafka2:
-    image: confluentinc/cp-kafka:7.2.1
-    container_name: kafka2
-    environment:
-      KAFKA_NODE_ID: 2
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_LISTENERS: PLAINTEXT://kafka2:9092,CONTROLLER://kafka2:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9092
-      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
-      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:9093,2@kafka2:9093,3@kafka3:9093'
-      KAFKA_PROCESS_ROLES: 'broker,controller'
-    volumes:
-      - ./run_workaround.sh:/tmp/run_workaround.sh
-    command: >
-      bash -c "chmod +x /tmp/run_workaround.sh &&
-               /tmp/run_workaround.sh && /etc/confluent/docker/run"
-  kafka3:
-    image: confluentinc/cp-kafka:7.2.1
-    container_name: kafka3
-    environment:
-      KAFKA_NODE_ID: 3
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_LISTENERS: PLAINTEXT://kafka3:9092,CONTROLLER://kafka3:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:9092
-      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
-      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:9093,2@kafka2:9093,3@kafka3:9093'
-      KAFKA_PROCESS_ROLES: 'broker,controller'
-    volumes:
-      - ./run_workaround.sh:/tmp/run_workaround.sh
-    command: >
-      bash -c "chmod +x /tmp/run_workaround.sh &&
-               /tmp/run_workaround.sh && /etc/confluent/docker/run"
+  # kafka2:
+  #   image: confluentinc/cp-kafka:7.2.1
+  #   container_name: kafka2
+  #   environment:
+  #     KAFKA_NODE_ID: 2
+  #     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+  #     KAFKA_LISTENERS: PLAINTEXT://kafka2:9092,CONTROLLER://kafka2:9093
+  #     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9092
+  #     KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+  #     KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:9093,2@kafka2:9093,3@kafka3:9093'
+  #     KAFKA_PROCESS_ROLES: 'broker,controller'
+  #   volumes:
+  #     - ./run_workaround.sh:/tmp/run_workaround.sh
+  #   command: >
+  #     bash -c "chmod +x /tmp/run_workaround.sh &&
+  #              /tmp/run_workaround.sh && /etc/confluent/docker/run"
+  # kafka3:
+  #   image: confluentinc/cp-kafka:7.2.1
+  #   container_name: kafka3
+  #   environment:
+  #     KAFKA_NODE_ID: 3
+  #     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+  #     KAFKA_LISTENERS: PLAINTEXT://kafka3:9092,CONTROLLER://kafka3:9093
+  #     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:9092
+  #     KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+  #     KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:9093,2@kafka2:9093,3@kafka3:9093'
+  #     KAFKA_PROCESS_ROLES: 'broker,controller'
+  #   volumes:
+  #     - ./run_workaround.sh:/tmp/run_workaround.sh
+  #   command: >
+  #     bash -c "chmod +x /tmp/run_workaround.sh &&
+  #              /tmp/run_workaround.sh && /etc/confluent/docker/run"
