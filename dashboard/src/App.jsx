@@ -4,65 +4,56 @@ import {
     getCoreRowModel,
     useReactTable,
 } from '@tanstack/react-table';
+import { useEffect, useState } from 'react';
 
 import './App.css';
+import { SOCKET_SERVER_URL } from './constants/ApiRoutes';
+import { sampleData } from './sampledata';
 
-const defaultData = [
-    {
-        firstName: 'tanner',
-        lastName: 'linsley',
-        age: 24,
-        visits: 100,
-        status: 'In Relationship',
-        progress: 50,
-    },
-    {
-        firstName: 'tandy',
-        lastName: 'miller',
-        age: 40,
-        visits: 40,
-        status: 'Single',
-        progress: 80,
-    },
-    {
-        firstName: 'joe',
-        lastName: 'dirte',
-        age: 45,
-        visits: 20,
-        status: 'Complicated',
-        progress: 10,
-    },
-];
 
 const columnHelper = createColumnHelper();
-
 const columns = [
-    columnHelper.accessor('firstName', {
+    columnHelper.accessor('MemTotal', {
         cell: info => info.getValue(),
+        header: 'Total Memory',
     }),
-    columnHelper.accessor(row => row.lastName, {
-        id: 'lastName',
-        cell: info => <i>{info.getValue()}</i>,
-        header: () => <span>Last Name</span>,
+    columnHelper.accessor('MemFree', {
+        cell: info => info.getValue(),
+        header: 'Memory Free',
     }),
-    columnHelper.accessor('age', {
-        header: () => 'Age',
-        cell: info => info.renderValue(),
+    columnHelper.accessor('MemAvailable', {
+        cell: info => info.getValue(),
+        header: 'Memory available'
     }),
-    columnHelper.accessor('visits', {
-        header: () => <span>Visits</span>,
+    columnHelper.accessor('SwapTotal', {
+        cell: info => info.getValue(),
+        header: 'Total Swap memory'
     }),
-    columnHelper.accessor('status', {
-        header: 'Status',
+    columnHelper.accessor('SwapCached', {
+        cell: info => info.getValue(),
+        header: 'Cached swap memory'
     }),
-    columnHelper.accessor('progress', {
-        header: 'Profile Progress',
-    }),
-];
+    columnHelper.accessor('SwapFree', {
+        cell: info => info.getValue(),
+        header: 'Free swap memory'
+    })
+]
 
 function App() {
+    const [data, setData] = useState(sampleData);
+
+    useEffect(() => {
+        let socket = new WebSocket(SOCKET_SERVER_URL);
+        socket.onmessage = function (e) {
+            console.log('data', e.data);
+            if (!!e.data) {
+                setData(JSON.parse(e.data))
+            }
+        }
+    }, []);
+
     const table = useReactTable({
-        data: defaultData,
+        data,
         columns,
         getCoreRowModel: getCoreRowModel(),
     })

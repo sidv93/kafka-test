@@ -38,16 +38,16 @@ services:
     networks: 
       - kafka
 
-  # ui:
-  #   container_name: dashboard-ui
-  #   build:
-  #     context: ./ui
-  #   env_file:
-  #     - .env
-  #   ports:
-  #     - "${WEB_UI_PORT}:3000"
-  #   networks: 
-  #     - kafka
+  ui:
+    container_name: dashboard-ui
+    build:
+      context: ./dashboard
+    env_file:
+      - .env
+    ports:
+      - "6000:80"
+    networks: 
+      - kafka
 
   broker:
     image: confluentinc/cp-kafka:7.3.0
