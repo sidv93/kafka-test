@@ -21,7 +21,6 @@ func SendStatsToProducer(stats map[string]int) (map[string]int, error) {
 	}
 	requestBody := bytes.NewReader(requestBodyBytes)
 	request, err := http.NewRequest("POST", producerUrl, requestBody)
-	fmt.Println(requestBody)
 	if err != nil {
 		fmt.Println("Request error", err)
 		return nil, err

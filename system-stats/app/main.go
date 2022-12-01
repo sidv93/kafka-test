@@ -18,7 +18,7 @@ func main() {
 func runCronJob() {
 	// cron job which runs every second
 	s := gocron.NewScheduler()
-	s.Every(10).Second().Do(collectStatsAndPushToProducer)
+	s.Every(5).Second().Do(collectStatsAndPushToProducer)
 	<-s.Start()
 }
 
