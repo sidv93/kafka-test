@@ -43,11 +43,12 @@ function App() {
     const [data, setData] = useState(sampleData);
 
     useEffect(() => {
-        let socket = new WebSocket(SOCKET_SERVER_URL);
+        let socket = new WebSocket('ws://localhost:4000/socket');
         socket.onmessage = function (e) {
-            console.log('data', e.data);
             if (!!e.data) {
-                setData(JSON.parse(e.data))
+                const data = JSON.parse(e.data);
+                console.log('d', data);
+                setData((d) => [...d, data]);
             }
         }
     }, []);

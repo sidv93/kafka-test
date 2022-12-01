@@ -25,6 +25,5 @@ func ReadMemoryStats() (map[string]int, error) {
 		}
 	}
 
-	// http.sendStatsToProducer(stats)
 	return stats, nil
 }

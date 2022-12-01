@@ -36,4 +36,6 @@ func collectStatsAndPushToProducer() {
 	if err != nil {
 		fmt.Println("Error when sending stats to producer", err)
 	}
+
+	fmt.Println("Sent system stats to producer")
 }
