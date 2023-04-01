@@ -30,7 +30,7 @@ The following needs to be present in a _host machine_ chosen for deployment.
     docker-compose up -d
 ```
 
-This command would bring up all containers in detached mode. Navigate to [http://localhost:6000](http://localhost:6000) and the UI should render system stats from the host machine.
+This command would bring up all containers in detached mode. Navigate to [http://localhost:8000](http://localhost:8000) and the UI should render system stats from the host machine.
 
 
 ### Improvements

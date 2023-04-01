@@ -1,21 +1,39 @@
-version: '3.7'
+# 新的 Compose Specification 不需要在开头写 version
+# version: '3.7'
 
 networks:
   kafka:
       name: kafka_network
+      # 默认就是 bridge
+      # 还有 host 和 none 可选
+      # host 删除了 Docker 容器和 主机 的网络隔离，使得 Docker 容器可以直接访问主机上的服务
+      # none 则关闭了所有网络访问
       driver: bridge 
 
 services:
   systemstats:
-    build:
-      context: ./system-stats
+    build: # 执行 docker-compose build 命令来生成镜像
+      context: ./system-stats # 生成镜像所需 Dockerfile 文件所在路径
+    # 使用 container_name 可以显式地为容器指定名称，从而更容易地在多个容器之间进行通信或管理。
     container_name: systemstats
+    # env_file 关键字用于指定要加载的环境变量文件的路径。
+    # 它可以指定一个文件路径，也可以是文件路径列表，用逗号分隔。
+    # 当使用 docker-compose up 命令启动服务时，Compose 将加载这些文件，并将它们中的所有键值对添加到服务的环境变量中。
     env_file:
       - .env
+    # 将容器的 3000 端口发布到主机的 ${SYSTEM_STATS_PORT} 端口上。
     ports:
       - "${SYSTEM_STATS_PORT}:3000"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    # 在 Docker 容器内部访问宿主机的 IP 地址通常需要使用 host.docker.internal。
+    # 但是，在某些 Docker 安装中，
+    # 例如 Docker for Mac 和 Docker for Windows，host.docker.internal 这个主机名在容器内部不可用。
+    # 为了解决这个问题，docker-compose 支持 extra_hosts 参数，允许你将主机名映射到 IP 地址。
+    # extra_hosts 参数将 host.docker.internal 这个主机名映射到宿主机的 IP 地址。
+    # host-gateway 是一个特殊的主机名，指向 Docker 容器网关的 IP 地址。
+    # 这样一来，在容器内部，你可以通过 host.docker.internal 主机名来访问宿主机的 IP 地址了。
+    # 现在注释掉下面的配置没有影响
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
     networks: 
       - kafka
   consumer:
@@ -52,7 +70,7 @@ services:
       - kafka
 
   broker:
-    image: confluentinc/cp-kafka:7.3.0
+    image: confluentinc/cp-kafka:7.3.0 # 执行 docker-compose up -d 时拉取镜像
     container_name: broker
     hostname: broker
     environment:
@@ -72,11 +90,14 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+    # 将物理机文件夹挂载到容器的虚拟文件系统中
+    # 主机文件路径:容器文件路径
     volumes:
       - ./run_workaround.sh:/tmp/run_workaround.sh
     ports:
       - "9092:9092"
       - "9101:9101"
+    # 当需要执行的命令被分成多行时要添加 >
     command: >
       bash -c "chmod +x /tmp/run_workaround.sh &&
                /tmp/run_workaround.sh && /etc/confluent/docker/run"
